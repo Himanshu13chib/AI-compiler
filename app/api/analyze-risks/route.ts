@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateJSON } from "@/lib/utils/gemini";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 10; // Vercel Hobby plan max: 10 seconds
 
 interface RiskItem {
   category: "scalability" | "security" | "missing" | "over-engineered" | "under-engineered";

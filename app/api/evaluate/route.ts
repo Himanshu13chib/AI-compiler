@@ -8,7 +8,7 @@ import { runStage5 } from "@/lib/pipeline/stage5-assemble";
 import type { PromptResult } from "@/lib/evaluation/metrics";
 
 export const runtime = "nodejs";
-export const maxDuration = 600;
+export const maxDuration = 10; // Vercel Hobby plan max: 10 seconds
 
 function sseEvent(type: string, data: unknown): string {
   return `data: ${JSON.stringify({ type, ...(typeof data === "object" ? data : { payload: data }) })}\n\n`;
