@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Key, Cpu, Bell, Shield, Palette, Save, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { Key, Cpu, Bell, Shield, Palette, Save, CheckCircle } from "lucide-react";
 
 const SETTINGS_TABS = [
   { id: "api", label: "API Keys", icon: Key },
@@ -14,9 +14,8 @@ const SETTINGS_TABS = [
 
 export function SettingsView() {
   const [activeTab, setActiveTab] = useState("api");
-  const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [apiKey, setApiKey] = useState("AIzaSyA0xr1szyxGkf9uNpQqAp8ViJawB6okhNo");
+  const [apiKey] = useState("••••••••••••••••••••••••••••••••••••••••");
   const [model, setModel] = useState("gemini-2.5-flash");
   const [temperature, setTemperature] = useState("0.7");
   const [maxTokens, setMaxTokens] = useState("8192");
@@ -55,17 +54,26 @@ export function SettingsView() {
               <div>
                 <h2 className="text-sm font-semibold text-white mb-1">Gemini API Key</h2>
                 <p className="text-xs text-[#475569] mb-4">Your Google Gemini API key for AI generation. Get one at <span className="text-violet-400">aistudio.google.com</span></p>
+                <div className="p-3 bg-blue-500/5 border border-blue-500/15 rounded-lg flex items-start gap-2 mb-4">
+                  <Shield className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-xs text-blue-400 font-medium mb-0.5">API Key is Secure</div>
+                    <div className="text-[10px] text-blue-400/70">Your API key is stored securely on the server and never exposed to the browser. This is a display-only field.</div>
+                  </div>
+                </div>
                 <div className="relative">
                   <input
-                    type={showKey ? "text" : "password"}
+                    type="text"
                     value={apiKey}
-                    onChange={e => setApiKey(e.target.value)}
-                    className="w-full bg-[#0a0a0f] border border-[rgba(139,92,246,0.15)] rounded-lg px-4 py-2.5 text-sm text-[#94a3b8] font-mono focus:outline-none focus:border-violet-500 transition-colors pr-10"
+                    readOnly
+                    disabled
+                    className="w-full bg-[#0a0a0f] border border-[rgba(139,92,246,0.15)] rounded-lg px-4 py-2.5 text-sm text-[#475569] font-mono cursor-not-allowed opacity-60"
                   />
-                  <button onClick={() => setShowKey(!showKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-white transition-colors">
-                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Key className="w-4 h-4 text-[#334155]" />
+                  </div>
                 </div>
+                <p className="text-[10px] text-[#334155] mt-2">To change your API key, update the GEMINI_API_KEY environment variable in your deployment settings.</p>
               </div>
               <div className="p-3 bg-emerald-500/5 border border-emerald-500/15 rounded-lg flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
