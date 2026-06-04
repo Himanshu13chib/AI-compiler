@@ -33,28 +33,28 @@ export function PipelineVisualizer({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-2xl p-6 space-y-6"
+      className="bg-zinc-900/90 backdrop-blur border border-zinc-800 rounded-xl p-8 space-y-8 w-full max-w-full"
     >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-          <h3 className="text-sm font-semibold text-zinc-200">Pipeline Execution</h3>
+          <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse" />
+          <h3 className="text-base font-semibold text-zinc-100">Pipeline Execution</h3>
         </div>
-        <div className="flex items-center gap-4 text-xs text-zinc-500">
-          <div className="flex items-center gap-1">
-            <Zap className="w-3 h-3 text-indigo-400" />
+        <div className="flex items-center gap-6 text-sm text-zinc-400">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-indigo-400" />
             <span>{completedCount}/5 stages</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3 text-zinc-400" />
-            <span>{(totalElapsed / 1000).toFixed(1)}s elapsed</span>
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-zinc-400" />
+            <span className="font-mono">{(totalElapsed / 1000).toFixed(2)}s elapsed</span>
           </div>
         </div>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
+      <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
         <motion.div
           className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full"
           animate={{ width: `${(completedCount / 5) * 100}%` }}
@@ -63,7 +63,7 @@ export function PipelineVisualizer({
       </div>
 
       {/* Stage nodes */}
-      <div className="flex items-center justify-center overflow-x-auto pb-2">
+      <div className="flex items-center justify-center w-full py-4">
         <div className="flex items-center">
           {STAGE_NAMES.map((name, i) => (
             <StageNode
@@ -83,15 +83,15 @@ export function PipelineVisualizer({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex items-center gap-2 text-xs text-indigo-400 bg-indigo-950/50 border border-indigo-900 rounded-lg px-3 py-2"
+          className="flex items-center gap-3 text-sm text-indigo-400 bg-indigo-950/50 border border-indigo-900 rounded-lg px-4 py-3"
         >
-          <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+          <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
           <span>Stage {activeStage}: {STAGE_NAMES[activeStage - 1]} is running...</span>
         </motion.div>
       )}
 
       {/* Live log */}
-      <LiveLog logs={logs} maxHeight="180px" />
+      <LiveLog logs={logs} maxHeight="200px" />
     </motion.div>
   );
 }

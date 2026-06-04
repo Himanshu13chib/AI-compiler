@@ -11,15 +11,13 @@ export function getGeminiClient(): GoogleGenerativeAI {
   return client;
 }
 
-// Fallback chain for Gemini Free Tier rate-limits
+// Fallback chain — only real, existing Gemini models
 const FALLBACK_MODELS = [
   "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-3.5-flash",
-  "gemini-2.5-pro",
   "gemini-2.0-flash-lite",
-  "gemini-flash-latest",
-  "gemini-pro-latest",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
 ];
 
 // Determine initial model

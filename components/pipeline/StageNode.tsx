@@ -46,7 +46,7 @@ const STATUS_CONFIG: Record<StageStatus, { color: string; glow: string; icon: Re
   },
 };
 
-const STAGE_ICONS = ["🔍", "🏗", "⚙️", "🔬", "🚀"];
+// Removed emoji icons for professional appearance
 
 export function StageNode({ stage, name, status, timeMs, isLast }: StageNodeProps) {
   const config = STATUS_CONFIG[status];
@@ -61,33 +61,30 @@ export function StageNode({ stage, name, status, timeMs, isLast }: StageNodeProp
       >
         {/* Node */}
         <motion.div
-          className={`relative flex flex-col items-center justify-center w-28 h-28 rounded-2xl border-2 transition-all duration-500 ${config.color} ${config.glow}`}
+          className={`relative flex flex-col items-center justify-center w-32 h-32 rounded-xl border-2 transition-all duration-500 ${config.color} ${config.glow}`}
           animate={status === "running" ? { scale: [1, 1.03, 1] } : {}}
           transition={{ repeat: Infinity, duration: 1.5 }}
         >
           {/* Stage number badge */}
-          <div className="absolute -top-3 -right-3 w-6 h-6 rounded-full bg-zinc-800 border border-zinc-600 flex items-center justify-center text-xs font-bold text-zinc-300">
+          <div className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-zinc-800 border-2 border-zinc-600 flex items-center justify-center text-xs font-bold text-zinc-300">
             {stage}
           </div>
           
-          {/* Icon */}
-          <div className="text-2xl mb-1">{STAGE_ICONS[stage - 1]}</div>
-          
           {/* Status icon */}
-          <div className="mb-1">{config.icon}</div>
+          <div className="mb-2">{config.icon}</div>
           
           {/* Name */}
-          <div className="text-[10px] font-medium text-center px-1 leading-tight">{name}</div>
+          <div className="text-xs font-semibold text-center px-2 leading-tight mb-1">{name}</div>
           
           {/* Time */}
           {timeMs && (
-            <div className="text-[9px] text-zinc-500 mt-1">{(timeMs / 1000).toFixed(1)}s</div>
+            <div className="text-xs text-zinc-400 font-mono mt-1">{(timeMs / 1000).toFixed(2)}s</div>
           )}
           
           {/* Running pulse ring */}
           {status === "running" && (
             <motion.div
-              className="absolute inset-0 rounded-2xl border-2 border-indigo-400"
+              className="absolute inset-0 rounded-xl border-2 border-indigo-400"
               animate={{ scale: [1, 1.15], opacity: [0.8, 0] }}
               transition={{ repeat: Infinity, duration: 1.2 }}
             />
@@ -95,16 +92,16 @@ export function StageNode({ stage, name, status, timeMs, isLast }: StageNodeProp
         </motion.div>
         
         {/* Status label */}
-        <div className="mt-2 text-[10px] font-medium text-zinc-500">{config.label}</div>
+        <div className="mt-3 text-xs font-medium text-zinc-400">{config.label}</div>
       </motion.div>
 
       {/* Connector line */}
       {!isLast && (
-        <div className="relative flex items-center w-12 h-1 mx-1">
-          <div className="w-full h-px bg-zinc-700" />
+        <div className="relative flex items-center w-16 h-1 mx-2">
+          <div className="w-full h-0.5 bg-zinc-700" />
           {status === "complete" && (
             <motion.div
-              className="absolute left-0 h-px bg-emerald-500"
+              className="absolute left-0 h-0.5 bg-emerald-500"
               initial={{ width: 0 }}
               animate={{ width: "100%" }}
               transition={{ duration: 0.5 }}
@@ -112,7 +109,7 @@ export function StageNode({ stage, name, status, timeMs, isLast }: StageNodeProp
           )}
           {status === "running" && (
             <motion.div
-              className="absolute left-0 h-px bg-indigo-500"
+              className="absolute left-0 h-0.5 bg-indigo-500"
               animate={{ x: ["-100%", "200%"] }}
               transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
               style={{ width: "50%" }}

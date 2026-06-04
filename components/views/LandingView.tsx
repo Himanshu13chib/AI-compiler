@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import {
   MessageSquare, Brain, Layers, Shield, Rocket, CheckCircle,
-  Play, Zap, Moon, Sun
+  Play, Zap
 } from "lucide-react";
 
 interface LandingViewProps {
@@ -20,13 +20,11 @@ const PIPELINE_STEPS = [
 ];
 
 const STATS = [
-  { value: "10K+", label: "Apps Generated", icon: Rocket, color: "#8b5cf6" },
-  { value: "98.6%", label: "Validation Success", icon: CheckCircle, color: "#10b981" },
-  { value: "120ms", label: "Avg Pipeline Time", icon: Zap, color: "#f59e0b" },
-  { value: "99.9%", label: "Runtime Reliability", icon: Shield, color: "#06b6d4" },
+  { value: "5", label: "Pipeline Stages", icon: Layers, color: "#8b5cf6" },
+  { value: "8+", label: "Consistency Checks", icon: CheckCircle, color: "#10b981" },
+  { value: "4", label: "Schemas Generated", icon: Zap, color: "#f59e0b" },
+  { value: "100%", label: "Validated JSON Output", icon: Shield, color: "#06b6d4" },
 ];
-
-const TRUSTED = ["Acme Corp", "Novatech", "Hyperion", "Devscale"];
 
 export function LandingView({ onStart }: LandingViewProps) {
   return (
@@ -141,11 +139,9 @@ export function LandingView({ onStart }: LandingViewProps) {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <div className="text-[10px] text-[#2d2d4a] uppercase tracking-widest mb-3">TRUSTED BY BUILDERS AT</div>
-            <div className="flex items-center gap-6">
-              {TRUSTED.map(name => (
-                <span key={name} className="text-sm text-[#3d3d5a] font-medium">{name}</span>
-              ))}
+            <div className="flex items-center gap-2 text-xs text-[#3d3d5a]">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Multi-stage pipeline • Zod validation • Surgical AI repair • Flow simulation</span>
             </div>
           </motion.div>
         </div>
@@ -199,7 +195,7 @@ export function LandingView({ onStart }: LandingViewProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="relative z-10 grid grid-cols-4 gap-4 px-8 pb-12 max-w-7xl mx-auto"
+        className="relative z-10 grid grid-cols-4 gap-4 px-8 pb-8 max-w-7xl mx-auto"
       >
         {STATS.map(stat => {
           const Icon = stat.icon;
@@ -221,6 +217,42 @@ export function LandingView({ onStart }: LandingViewProps) {
             </div>
           );
         })}
+      </motion.div>
+
+      {/* How It Works */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="relative z-10 px-8 pb-16 max-w-7xl mx-auto"
+      >
+        <div className="border-t border-[rgba(139,92,246,0.08)] pt-10">
+          <div className="text-[10px] text-[#334155] uppercase tracking-widest mb-6">How It Works</div>
+          <div className="flex items-start gap-0">
+            {[
+              { n: "1", name: "Intent Extraction", desc: "Parses your natural language input into a structured intent object — features, roles, complexity score, ambiguities." },
+              { n: "2", name: "System Architect", desc: "Designs entities, flows, role-permission matrix, and cross-cutting concerns like caching and rate limits." },
+              { n: "3", name: "Schema Generator", desc: "One AI call produces all four schemas simultaneously: UI, API, Database, and Auth." },
+              { n: "4", name: "Validation + Repair", desc: "8 cross-layer consistency checks run. Warnings auto-fixed. Critical issues surgically repaired by AI on the broken layer only." },
+              { n: "5", name: "Assembler + Simulator", desc: "Walks every user flow against the schemas. Verifies endpoints exist, DB ops are valid, roles have permission. Scores 0–100." },
+            ].map((step, i) => (
+              <div key={step.n} className="flex items-start flex-1">
+                <div className="flex flex-col items-start flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-[10px] font-bold text-violet-400 shrink-0">
+                      {step.n}
+                    </div>
+                    <span className="text-xs font-semibold text-white">{step.name}</span>
+                  </div>
+                  <p className="text-[10px] text-[#475569] leading-relaxed pr-4">{step.desc}</p>
+                </div>
+                {i < 4 && (
+                  <div className="text-[#2d2d4a] text-lg mt-1 shrink-0 mx-1">→</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </motion.div>
     </div>
   );

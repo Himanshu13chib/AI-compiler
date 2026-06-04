@@ -8,7 +8,8 @@ import type { LogEntry } from "@/components/pipeline/LiveLog";
 import {
   CheckCircle, Loader2, Clock, Hash, ExternalLink,
   LayoutGrid, Minus, Plus, Maximize2, AlignLeft, FileJson,
-  Database, Shield, Code2, Rocket, ChevronRight, X
+  Database, Shield, Code2, Rocket, ChevronRight, X, Search,
+  Layout, Settings, Wrench, Package
 } from "lucide-react";
 
 interface PipelinesViewProps {
@@ -22,37 +23,37 @@ interface PipelinesViewProps {
 
 const PIPELINE_NODES = [
   {
-    id: "intent", label: "Intent Extraction", icon: "🔍", color: "#8b5cf6",
+    id: "intent", label: "Intent Extraction", icon: "search", color: "#8b5cf6",
     desc: "Extracting features, entities, and requirements...",
     row: 0, col: 1,
   },
   {
-    id: "architect", label: "Architecture Planning", icon: "🏗", color: "#6366f1",
+    id: "architect", label: "Architecture Planning", icon: "layout", color: "#6366f1",
     desc: "Designing system architecture and components...",
     row: 0, col: 2,
   },
   {
-    id: "schema", label: "Schema Generation", icon: "⚙️", color: "#06b6d4",
+    id: "schema", label: "Schema Generation", icon: "settings", color: "#06b6d4",
     desc: "Generating UI, API, DB schemas and auth rules...",
     row: 0, col: 3,
   },
   {
-    id: "validator", label: "Consistency Validator", icon: "🔬", color: "#10b981",
+    id: "validator", label: "Consistency Validator", icon: "check-circle", color: "#10b981",
     desc: "Validating cross-layer consistency and schema integrity...",
     row: 1, col: 1,
   },
   {
-    id: "repair", label: "Repair Engine", icon: "🔧", color: "#f59e0b",
+    id: "repair", label: "Repair Engine", icon: "wrench", color: "#f59e0b",
     desc: "Detecting issues and repairing inconsistencies automatically...",
     row: 1, col: 2,
   },
   {
-    id: "runtime", label: "Runtime Executor", icon: "🚀", color: "#ef4444",
+    id: "runtime", label: "Runtime Executor", icon: "rocket", color: "#ef4444",
     desc: "Building runtime and generating executable application...",
     row: 1, col: 3,
   },
   {
-    id: "output", label: "Executable App", icon: "📦", color: "#10b981",
+    id: "output", label: "Executable App", icon: "package", color: "#10b981",
     desc: "Application is ready to run and deploy.",
     row: 1, col: 4,
     isOutput: true,
@@ -61,6 +62,16 @@ const PIPELINE_NODES = [
 
 const NODE_STAGE_MAP: Record<string, number> = {
   intent: 1, architect: 2, schema: 3, validator: 4, repair: 4, runtime: 5, output: 5,
+};
+
+const ICON_MAP: Record<string, any> = {
+  search: Search,
+  layout: Layout,
+  settings: Settings,
+  "check-circle": CheckCircle,
+  wrench: Wrench,
+  rocket: Rocket,
+  package: Package,
 };
 
 function getNodeStatus(nodeId: string, stageStatuses: StageStatus[], result: Stage5Output | null): StageStatus {
@@ -132,7 +143,7 @@ export function PipelinesView({ result, isCompiling, stageStatuses, stageTimings
             <div className="absolute" style={{ left: 0, top: 60 }}>
               <div className="bg-[#13131f] border border-[rgba(139,92,246,0.2)] rounded-xl p-3 w-36 cursor-pointer hover:border-violet-500/40 transition-all">
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <span className="text-sm">💬</span>
+                  <AlignLeft className="w-4 h-4 text-violet-400" />
                   <span className="text-xs font-semibold text-white">User Prompt</span>
                 </div>
                 <p className="text-[10px] text-[#475569] leading-relaxed line-clamp-3">
@@ -256,7 +267,10 @@ export function PipelinesView({ result, isCompiling, stageStatuses, stageTimings
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(139,92,246,0.08)]">
             <div className="flex items-center gap-2">
-              <span className="text-base">{selectedNodeData.icon}</span>
+              {(() => {
+                const IconComponent = ICON_MAP[selectedNodeData.icon];
+                return IconComponent ? <IconComponent className="w-4 h-4 text-violet-400" /> : null;
+              })()}
               <span className="text-sm font-semibold text-white">{selectedNodeData.label}</span>
             </div>
             <div className="flex items-center gap-2">
@@ -366,6 +380,7 @@ function PipelineNodeCard({ node, status, timing, tokens, selected, onClick, isO
 }) {
   const isDone = status === "complete";
   const isRunning = status === "running";
+  const IconComponent = ICON_MAP[node.icon];
 
   return (
     <motion.div
@@ -378,9 +393,9 @@ function PipelineNodeCard({ node, status, timing, tokens, selected, onClick, isO
       style={{ borderColor: selected ? node.color + "60" : undefined }}
     >
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center"
           style={{ background: node.color + "18", border: `1px solid ${node.color}30` }}>
-          {node.icon}
+          {IconComponent && <IconComponent className="w-4 h-4" style={{ color: node.color }} />}
         </div>
         <span className="text-xs font-semibold text-white leading-tight">{node.label}</span>
       </div>

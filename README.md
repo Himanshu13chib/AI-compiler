@@ -1,240 +1,156 @@
-# AppCompiler — Human Intent → Executable App Configuration
+# AppCompiler — Natural Language → Full App Configuration
 
-> A production-grade, 5-stage AI pipeline that converts natural language app descriptions into complete, validated, executable application configurations.
+> A compiler for software generation. Not a chatbot wrapper. A multi-stage AI pipeline that transforms natural language into validated, executable application schemas — with the reliability of a compiler.
 
-## What Is This?
+## What It Does
 
-AppCompiler is not a chatbot wrapper. It's an **engineered pipeline system** — think of it as a compiler for software, but instead of `code → machine instructions`, it's `human intent → complete, validated, executable app configuration`.
+You type: `"Build a CRM with login, contacts, dashboard, role-based access, and premium payments."`
 
-Every stage is a separate AI call with strict Zod validation, surgical repair on failures, and a simulation engine that proves the output actually works.
+AppCompiler outputs a complete, cross-validated application config covering UI schema, API schema, database schema, auth schema, flow simulation results, risk analysis, cost estimates, and competitor DNA comparison.
 
----
+## Architecture — Why Multi-Stage?
 
-## Architecture
-
-### The 5-Stage Pipeline
+Single-prompt systems hallucinate and produce inconsistent output. A CRM generated in one shot might have a UI component referencing an API endpoint that does not exist, or a DB foreign key pointing to a non-existent table. We solve this the same way a real compiler does: separate passes, each with a specific responsibility, each validated before the next begins.
 
 ```
-User Input
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Stage 1: Intent Extractor                                       │
-│  • Identifies app type (20+ categories)                          │
-│  • Extracts all features (explicit + implied)                    │
-│  • Assigns complexity score 1-10                                 │
-│  • Detects ambiguities, generates clarifying questions           │
-│  • Infers missing but obvious features                           │
-└─────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Stage 2: System Architect                                       │
-│  • Designs entities with full field definitions                  │
-│  • Defines all user flows (happy path + error states)            │
-│  • Creates role-permission matrix                                │
-│  • Identifies cross-cutting concerns (caching, rate limiting)    │
-│  • Suggests microservice boundaries if complexity > 7            │
-└─────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Stage 3: Schema Generator (4 schemas in 1 call)                 │
-│  • UI Schema: pages, components, routes, SEO                     │
-│  • API Schema: endpoints, methods, request/response, rate limits │
-│  • DB Schema: PostgreSQL tables, columns, indexes, migrations    │
-│  • Auth Schema: JWT/OAuth, roles, rules, premium gating          │
-└─────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Stage 4: Validation + Repair Engine                             │
-│  • Cross-layer consistency checks (8 check types)                │
-│  • Auto-fix warnings programmatically                            │
-│  • AI surgical repair for critical issues (max 3 attempts each)  │
-│  • Calculates consistency score 0-100                            │
-└─────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────┐
-│  Stage 5: Final Assembler + Simulator                            │
-│  • Assembles master config from all stages                       │
-│  • Generates README documentation                                │
-│  • Simulates every user flow against the schemas                 │
-│  • Calculates executability score 0-100                          │
-└─────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-Complete, Validated, Executable App Configuration
+User Prompt
+│
+▼
+[Stage 1] Intent Extractor
+  Raw input → structured intent JSON
+  Detects: features, roles, ambiguities, complexity score
+  Zod-validated. Auto-coerces on schema mismatch.
+│
+▼
+[Stage 2] System Architect
+  Intent → full system design
+  Entities, flows, role-permission matrix, cross-cutting concerns
+  (caching, rate limits, audit logs)
+│
+▼
+[Stage 3] Schema Generator
+  One AI call → 4 schemas simultaneously:
+  UI Schema, API Schema, DB Schema, Auth Schema
+  Every field typed. Every relation explicit.
+│
+▼
+[Stage 4] Validation + Repair Engine   ← most critical stage
+  8 cross-layer consistency checks run automatically.
+  Warnings: auto-fixed programmatically.
+  Critical issues: surgical AI repair of ONLY the broken layer.
+  Max 3 attempts per issue. Unresolved issues flagged clearly.
+│
+▼
+[Stage 5] Assembler + Simulator
+  Walks every user flow step against the schemas.
+  Verifies: API endpoint exists, DB operation valid, role has permission.
+  Produces executability score 0–100.
 ```
 
-### Key Design Decisions
+## The 8 Consistency Checks (Stage 4)
 
-**Why separate AI calls per stage?**
-Each stage has a different cognitive task. Mixing them degrades quality. Stage 1 needs product thinking; Stage 2 needs architectural thinking; Stage 3 needs schema design thinking. Separation also allows surgical repair — if Stage 3's DB schema breaks, we only re-call Stage 3, not the entire pipeline.
+1. Every UI component `dataSource` maps to a real API endpoint
+2. Every API field exists in DB schema
+3. Every role in UI/API is defined in Auth schema
+4. Every foreign key references a real table and column
+5. Premium-gated features have access control in UI
+6. No circular entity dependencies
+7. Every flow actor is a defined role
+8. Mandatory fields (`id`, `createdAt`, `updatedAt`) exist on all DB tables
 
-**Why Zod everywhere?**
-AI output is non-deterministic. Without strict schema validation, downstream stages receive garbage. Zod catches type mismatches, missing fields, and invalid enums before they propagate.
+## Key Design Decisions and Tradeoffs
+
+**Why Gemini 2.0 Flash?**
+Fast, free tier, strong at structured JSON. We use `responseMimeType: "application/json"` to constrain output at the model level — not just prompt engineering. This reduces hallucinated fields significantly.
+
+**Why Zod on every stage output?**
+Gemini occasionally returns valid JSON that does not match the expected schema. Without Zod, a wrong field type in Stage 2 silently corrupts Stage 3 and Stage 4. Zod catches this at the boundary. Each stage has a coerce fallback that fixes common issues (wrong enum value, number-as-string, missing array) before throwing.
+
+**Why surgical repair instead of full retry?**
+Full retry means 5 more API calls, 30+ more seconds, and often produces the same error because the model makes the same assumption. Surgical repair sends only the broken layer (e.g., just `dbSchema`) with the specific issue description. Faster, cheaper, more targeted.
 
 **Why SSE streaming?**
-The pipeline takes 30-120 seconds. SSE lets the UI show live progress per stage, live logs, and repair events — making the wait feel productive rather than frozen.
+The full pipeline takes 30–90 seconds. Without streaming, the user sees a blank screen and loses confidence. SSE pushes stage-by-stage progress so the UI always reflects what is happening.
 
-**Why surgical repair vs full retry?**
-Full retry wastes tokens and time. If only the DB schema has a broken foreign key, we pass only the DB schema + the specific issue to Gemini. This is 10x cheaper and faster.
+**Cost vs Quality Tradeoff**
+- `gemini-2.0-flash`: ~15s per stage, lower cost, good quality — default
+- `gemini-2.5-flash`: ~25s per stage, higher quality, still free tier
+- Automatic fallback on rate limit, then recovery when quota resets
+- `maxOutputTokens: 8192` per stage — enough for complex apps, prevents runaway responses
 
----
-
-## Features
-
-### Core Pipeline
-- 5-stage AI pipeline with separate Gemini calls per stage
-- Strict Zod validation on all outputs (no `.any()` anywhere)
-- Surgical repair engine with max 3 attempts per issue
-- Cross-layer consistency checks (8 check types)
-- Flow simulation engine that walks every user flow
-
-### Output Schemas
-- **UI Schema**: Pages, routes, components, SEO meta, design tokens
-- **API Schema**: REST endpoints with methods, roles, rate limits, webhooks
-- **DB Schema**: PostgreSQL tables, columns, indexes, migrations, seed data
-- **Auth Schema**: JWT/OAuth, role hierarchy, resource-action rules, premium gating
-
-### Creative Features
-- **App DNA Fingerprint**: Unique SVG radar chart across 8 complexity dimensions
-- **Risk Analyzer**: Senior engineer code review — scalability, security, missing pieces
-- **Cost Estimator**: Monthly AWS infrastructure costs at 1k/10k/100k users
-- **Diff Engine**: Git-style diff between two generated configs
-- **Evaluation Dashboard**: Run all 20 benchmark prompts with metrics and charts
-
-### UI/UX
-- Dark IDE/terminal aesthetic
-- Animated pipeline visualizer with live logs
-- Typewriter hero with cycling example prompts
-- 10-tab output dashboard with Monaco editor
-- Export to JSON, SQL, copy to clipboard
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 14 (App Router, TypeScript) |
-| Styling | Tailwind CSS |
-| AI | Google Gemini 2.0 Flash |
-| Validation | Zod (strict, no `.any()`) |
-| Animations | Framer Motion |
-| Charts | Recharts |
-| Icons | Lucide React |
-
----
-
-## Setup
-
-### Prerequisites
-- Node.js 18+
-- A Gemini API key from [aistudio.google.com](https://aistudio.google.com) (free tier)
-
-### Installation
+## Running Locally
 
 ```bash
-git clone <repo>
-cd appcompiler
+git clone https://github.com/Himanshu13chib/AI-compiler
+cd AI-compiler
 npm install
-```
-
-### Environment Variables
-
-Create `.env.local`:
-
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-### Run Locally
-
-```bash
+cp .env.example .env.local
+# Add your Gemini API key from https://aistudio.google.com/ (free)
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open http://localhost:3000
 
-### Run Evaluation Benchmark
+## Evaluation Framework
 
-Navigate to [http://localhost:3000/evaluate](http://localhost:3000/evaluate) and click "Run Benchmark" to run all 20 test prompts.
+Go to `/evaluate` to run the built-in benchmark:
 
----
+- 10 real product prompts (CRM, e-commerce, healthcare, HR, delivery, etc.)
+- 10 edge cases (vague inputs, contradictions, underspecified, conflicting roles)
+- Tracks: success rate, retries per request, failure type breakdown, latency per stage
+
+## Creative Features
+
+| Feature | What It Does |
+|---|---|
+| App DNA | Radial SVG fingerprint across 8 complexity dimensions |
+| Diff Engine | Git-style schema diff when re-generating with modified prompt |
+| ELI5 Mode | Converts all technical output to plain English |
+| Risk Analyzer | Skeptical senior engineer review — finds bottlenecks and gaps |
+| Cost Estimator | Monthly infra cost at 1K / 10K / 100K users |
+| Competitor DNA | Feature overlap vs Salesforce, Linear, Shopify, etc. |
+| Refinement Chat | Surgical schema updates without full re-generation |
+| Mobile Schema | Adapts UI schema for mobile (bottom nav, card layouts, swipe) |
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `GEMINI_API_KEY` | Yes | From https://aistudio.google.com/ — free |
+| `GEMINI_MODEL` | No | Override model. Default: `gemini-2.0-flash` |
 
 ## Project Structure
 
 ```
-/app
-  page.tsx                    # Main compiler interface
-  /evaluate/page.tsx          # Evaluation dashboard
-  /api/generate/route.ts      # SSE streaming pipeline endpoint
-  /api/validate/route.ts      # Standalone validation
-  /api/evaluate/route.ts      # Benchmark runner
+app/
+  page.tsx                   Main compiler interface
+  evaluate/page.tsx          Benchmark dashboard
+  api/generate/route.ts      SSE streaming pipeline endpoint
+  api/validate/route.ts      Standalone validation
+  api/evaluate/route.ts      Benchmark runner
+  api/analyze-risks/         Risk analyzer
+  api/competitor-dna/        Competitor comparison
+  api/explain/               ELI5 mode
+  api/refine/                Incremental refinement
+  api/export-openapi/        OpenAPI YAML export
 
-/lib
-  /pipeline
-    stage1-intent.ts          # Intent extraction
-    stage2-architect.ts       # System architecture design
-    stage3-schema.ts          # 4-schema generation
-    stage4-validate.ts        # Validation + repair orchestration
-    stage5-assemble.ts        # Assembly + simulation
-    /schemas/index.ts         # All Zod schemas
+lib/pipeline/
+  stage1-intent.ts           Intent extraction
+  stage2-architect.ts        System design
+  stage3-schema.ts           4-schema generation
+  stage4-validate.ts         Validation + repair engine
+  stage5-assemble.ts         Assembly + simulation
+  schemas/index.ts           All Zod schemas
 
-  /evaluation
-    dataset.ts                # 20 benchmark prompts
-    metrics.ts                # Aggregate metrics calculation
+lib/utils/
+  gemini.ts                  Gemini client with fallback chain
+  consistency.ts             8 cross-layer consistency checks
+  repair.ts                  Surgical repair engine
+  simulator.ts               Flow execution simulator
 
-  /utils
-    gemini.ts                 # Gemini client wrapper
-    repair.ts                 # Surgical repair engine
-    consistency.ts            # Cross-layer consistency checks
-    simulator.ts              # Flow simulation engine
-
-/components
-  /pipeline
-    PipelineVisualizer.tsx    # Animated pipeline diagram
-    StageNode.tsx             # Individual stage node
-    LiveLog.tsx               # Real-time log stream
-
-  /output
-    OverviewTab.tsx           # App summary + score gauges
-    ApiSchemaTab.tsx          # Postman-style endpoint list
-    DatabaseTab.tsx           # Table viewer + migrations
-    AuthMatrixTab.tsx         # Role-permission matrix
-    ValidationTab.tsx         # Issues + repair log
-    SimulationTab.tsx         # Flow execution results
-
-  /creative
-    AppDNA.tsx                # Radar chart fingerprint
-    RiskAnalyzer.tsx          # Risk analysis panel
-    CostEstimator.tsx         # Infrastructure cost estimator
-    DiffEngine.tsx            # Schema diff viewer
+components/
+  pipeline/                  PipelineVisualizer, StageNode, LiveLog
+  output/                    ApiSchemaTab, DatabaseTab, AuthMatrixTab, SimulationTab
+  creative/                  AppDNA, DiffEngine, RiskAnalyzer, CostEstimator
+  views/                     Page-level views
 ```
-
----
-
-## Tradeoffs
-
-1. **Latency vs Quality**: Each stage is a separate AI call, adding latency. The alternative (one mega-prompt) produces significantly worse output. We chose quality.
-
-2. **Repair vs Retry**: Surgical repair is cheaper but more complex to implement. Full retry is simpler but wastes tokens. We chose surgical repair.
-
-3. **Zod strictness vs Flexibility**: Strict Zod schemas catch AI hallucinations but require coercion logic for edge cases. We chose strictness with coercion fallbacks.
-
-4. **Client-side simulation vs AI simulation**: The flow simulator runs client-side using heuristics rather than another AI call. This is faster and cheaper, though less nuanced.
-
----
-
-## Evaluation Dataset
-
-**10 Real Product Prompts**: CRM, E-commerce, Project Management, Healthcare, EdTech, Restaurant, Real Estate, HR, Multi-tenant SaaS, Delivery Platform
-
-**10 Edge Cases**: Maximally vague, no domain, feature explosion, direct contradiction, logical conflict, single word clone, zero signal, role conflict, technical impossibility, overspecified chaos
-
----
-
-*Built for the AI Engineer Internship Demo Task*

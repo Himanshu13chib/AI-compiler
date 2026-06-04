@@ -5,16 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Stage5Output } from "@/lib/pipeline/schemas";
 import type { StageStatus } from "@/components/pipeline/StageNode";
 import type { LogEntry } from "@/components/pipeline/LiveLog";
-import { OverviewTab } from "@/components/output/OverviewTab";
-import { ApiSchemaTab } from "@/components/output/ApiSchemaTab";
-import { DatabaseTab } from "@/components/output/DatabaseTab";
-import { AuthMatrixTab } from "@/components/output/AuthMatrixTab";
-import { ValidationTab } from "@/components/output/ValidationTab";
-import { AppDNA } from "@/components/creative/AppDNA";
-import { RefinementChat } from "@/components/creative/RefinementChat";
 import {
-  Sparkles, Send, Loader2, CheckCircle, Clock, ChevronDown,
-  ChevronUp, Save, Share2, Plus, History, Wand2, Download, Copy, FileCode
+  Sparkles, Send, Loader2, CheckCircle, ChevronDown,
+  ChevronUp, History, Wand2, Download, Copy, FileCode,
+  HelpCircle, ArrowRight, SkipForward
 } from "lucide-react";
 
 const EXAMPLE_PROMPTS = [
@@ -68,12 +62,67 @@ export function WorkspaceView({
   const [outputTab, setOutputTab] = useState("ui");
   const [showLogs, setShowLogs] = useState(false);
   const [chatMsg, setChatMsg] = useState("");
+  const [clarifyingQuestions, setClarifyingQuestions] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [showClarify, setShowClarify] = useState(false);
+  const [clarifyLoading, setClarifyLoading] = useState(false);
 
   const completedStages = stageStatuses.filter(s => s === "complete").length;
-  const activeStageIdx = stageStatuses.findIndex(s => s === "running");
   const progressPct = isCompiling
     ? Math.round((completedStages / 5) * 100)
     : result ? 100 : 0;
+
+  // Smart compile: check for vague prompt first
+  async function smartCompile() {
+    if (!prompt.trim() || isCompiling) return;
+    // If prompt is short/vague, fetch clarifying questions from Stage 1 intent
+    if (prompt.trim().split(" ").length < 8 && !showClarify) {
+      setClarifyLoading(true);
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: prompt.trim(), clarifyOnly: true }),
+        });
+        // We can't easily get just stage1 output here, so we use a lightweight heuristic:
+        // just show generic clarifying questions for short prompts
+        const questions = [
+          "What type of users will use this app? (e.g. admins, customers, staff)",
+          "Should it include authentication and role-based access?",
+          "Do you need payments, real-time features, or file uploads?",
+          "What is the primary goal — internal tool, customer-facing, or marketplace?",
+        ];
+        setClarifyingQuestions(questions);
+        setShowClarify(true);
+      } catch {
+        compile(); // fallback: just compile
+      } finally {
+        setClarifyLoading(false);
+      }
+    } else {
+      compile();
+    }
+  }
+
+  function answerAndCompile() {
+    // Append answers to prompt
+    const answered = Object.entries(answers)
+      .filter(([, v]) => v.trim())
+      .map(([i, v]) => `${clarifyingQuestions[Number(i)]}: ${v}`)
+      .join(". ");
+    if (answered) setPrompt(prompt + ". " + answered);
+    setShowClarify(false);
+    setClarifyingQuestions([]);
+    setAnswers({});
+    setTimeout(() => compile(), 50);
+  }
+
+  function skipAndCompile() {
+    setShowClarify(false);
+    setClarifyingQuestions([]);
+    setAnswers({});
+    compile();
+  }
 
   const stats = result ? {
     files: result.masterConfig.schemas.uiSchema.pages.length + result.masterConfig.schemas.dbSchema.tables.length,
@@ -115,7 +164,7 @@ export function WorkspaceView({
             <textarea
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) compile(); }}
+              onKeyDown={e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) smartCompile(); }}
               placeholder="Build a CRM with login, contacts, dashboard, role-based access, premium plan with payments. Admins can see analytics."
               className="w-full bg-[#0a0a0f] border border-[rgba(139,92,246,0.12)] rounded-lg p-3 text-sm text-[#e2e8f0] placeholder-[#334155] focus:outline-none focus:border-violet-500 resize-none transition-colors"
               rows={4}
@@ -129,11 +178,11 @@ export function WorkspaceView({
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-[#334155]">{prompt.length} / 4000</span>
                 <button
-                  onClick={compile}
-                  disabled={isCompiling || !prompt.trim()}
+                  onClick={smartCompile}
+                  disabled={isCompiling || clarifyLoading || !prompt.trim()}
                   className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:bg-[#1e1e2e] disabled:text-[#334155] text-white text-xs font-semibold rounded-lg transition-all"
                 >
-                  {isCompiling ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  {(isCompiling || clarifyLoading) ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                 </button>
               </div>
             </div>
@@ -147,6 +196,51 @@ export function WorkspaceView({
               ))}
             </div>
           </div>
+
+          {/* Clarifying Questions Card */}
+          <AnimatePresence>
+            {showClarify && clarifyingQuestions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="bg-[#13131f] border border-amber-500/20 rounded-xl p-4"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <HelpCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="text-sm font-semibold text-white">Your prompt is a bit vague</span>
+                  <span className="text-[10px] text-[#475569] ml-1">— a few quick answers will improve output quality</span>
+                </div>
+                <div className="space-y-3 mb-4">
+                  {clarifyingQuestions.map((q, i) => (
+                    <div key={i}>
+                      <div className="text-[10px] text-[#64748b] mb-1">{q}</div>
+                      <input
+                        value={answers[i] || ""}
+                        onChange={e => setAnswers(prev => ({ ...prev, [i]: e.target.value }))}
+                        placeholder="Optional — leave blank to let AI decide"
+                        className="w-full bg-[#0a0a0f] border border-[rgba(139,92,246,0.1)] rounded-lg px-3 py-1.5 text-xs text-[#94a3b8] placeholder-[#334155] focus:outline-none focus:border-violet-500 transition-colors"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={answerAndCompile}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold rounded-lg transition-all"
+                  >
+                    <ArrowRight className="w-3.5 h-3.5" /> Answer & Continue
+                  </button>
+                  <button
+                    onClick={skipAndCompile}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-[#0a0a0f] border border-[rgba(139,92,246,0.1)] text-[#475569] text-xs rounded-lg hover:text-white transition-all"
+                  >
+                    <SkipForward className="w-3.5 h-3.5" /> Skip — Let AI Decide
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* 2 — Pipeline Progress */}
           {(isCompiling || result) && (
